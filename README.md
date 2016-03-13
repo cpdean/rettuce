@@ -9,3 +9,5 @@ There once was a server.  It held data.  It was easy to use so people used it.  
 
 
 This isn't that server -- this is just a tribute.
+
+[![Build Status](https://travis-ci.org/cpdean/rettuce.svg?branch=master)](https://travis-ci.org/cpdean/rettuce)
