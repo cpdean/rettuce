@@ -4,5 +4,3 @@
 
 pushd python
 tox
-popd
-echo 'tadah!'
