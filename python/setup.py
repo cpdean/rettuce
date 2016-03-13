@@ -21,5 +21,10 @@ setup(
     license='MIT',
     packages=[PACKAGE_NAME],
     tests_require=['py.test'],
+    entry_points={
+        "console_scripts": [
+            'rettuce-py = rettuce:main'
+        ]
+    },
     zip_safe=False,
 )
