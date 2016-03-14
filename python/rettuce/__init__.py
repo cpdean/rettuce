@@ -8,12 +8,51 @@ def next_line():
         yield input()
 
 
+class DBState(object):
+    """
+    for the course of the run, maintains
+    the interface for the db.
+    """
+
+    def __init__(self):
+        # keep track of {variable: value}
+        self.namespace = dict()
+        # keep track of {value: count}
+        self.vals = dict()
+
+    def get(self, name):
+        return self.namespace.get(name, "nil")
+
+    def set(self, name, value):
+        if name in self.namespace:
+            old_value = self.namespace[name]
+            self.vals[old_value] -= 1
+        self.namespace[name] = value
+        old_count = self.vals.get(value, 0)
+        self.vals[value] = old_count + 1
+
+    def unset(self, name):
+        if name in self.namespace:
+            old_value = self.namespace[name]
+            self.vals[old_value] -= 1
+        del self.namespace[name]
+
+    def num_equal_to(self, value):
+        return self.vals.get(value, 0)
+
+    def begin_transaction(self):
+        pass
+
+    def commit_transaction(self):
+        pass
+
+    def rollback_transaction(self):
+        pass
+
+
 def _main(inputs, outputs):
-    # keep track of {variable: value}
-    namespace = dict()
-    # keep track of {value: count}
-    vals = dict()
     write = lambda s: outputs.write(str(s) + "\n")
+    the_db = DBState()
     for line in (i.lower() for i in inputs):
         try:
             if line == "end":
@@ -21,30 +60,22 @@ def _main(inputs, outputs):
 
             elif line.startswith("set "):
                 cmd, varname, value = line.split()
-                if varname in namespace:
-                    old_value = namespace[varname]
-                    vals[old_value] -= 1
-                namespace[varname] = value
-                old_count = vals.get(value, 0)
-                vals[value] = old_count + 1
+                the_db.set(varname, value)
                 write("")
 
             elif line.startswith("unset "):
                 cmd, varname = line.split()
-                if varname in namespace:
-                    old_value = namespace[varname]
-                    vals[old_value] -= 1
-                del namespace[varname]
+                the_db.unset(varname)
                 write("")
 
             elif line.startswith("get "):
                 cmd, varname = line.split()
-                o = namespace.get(varname, "nil")
+                o = the_db.get(varname)
                 write(o)
 
             elif line.startswith("numequalto "):
                 cmd, value = line.split()
-                o = vals.get(value, 0)
+                o = the_db.num_equal_to(value)
                 write(o)
 
             else:
