@@ -9,8 +9,11 @@ def next_line():
 
 
 def _main(inputs, outputs):
+    # keep track of {variable: value}
     namespace = dict()
-    write = lambda s: outputs.write(s + "\n")
+    # keep track of {value: count}
+    vals = dict()
+    write = lambda s: outputs.write(str(s) + "\n")
     for line in (i.lower() for i in inputs):
         try:
             if line == "end":
@@ -18,17 +21,30 @@ def _main(inputs, outputs):
 
             elif line.startswith("set "):
                 cmd, varname, value = line.split()
+                if varname in namespace:
+                    old_value = namespace[varname]
+                    vals[old_value] -= 1
                 namespace[varname] = value
+                old_count = vals.get(value, 0)
+                vals[value] = old_count + 1
                 write("")
 
             elif line.startswith("unset "):
                 cmd, varname = line.split()
+                if varname in namespace:
+                    old_value = namespace[varname]
+                    vals[old_value] -= 1
                 del namespace[varname]
                 write("")
 
             elif line.startswith("get "):
                 cmd, varname = line.split()
                 o = namespace.get(varname, "nil")
+                write(o)
+
+            elif line.startswith("numequalto "):
+                cmd, value = line.split()
+                o = vals.get(value, 0)
                 write(o)
 
             else:
