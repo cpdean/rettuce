@@ -8,10 +8,22 @@ def next_line():
         yield input()
 
 
+class ItemDeleted(object):
+    def __str__(self):
+        return "nil"
+
+
+# constant whose id in memory will be unique
+# placeholder for anything that's been deleted during a transaction
+DELETED = ItemDeleted()
+
+
 class DBState(object):
     """
     for the course of the run, maintains
     the interface for the db.
+
+    doesn't make any promises on multi-users yet
     """
 
     def __init__(self):
@@ -19,26 +31,82 @@ class DBState(object):
         self.namespace = dict()
         # keep track of {value: count}
         self.vals = dict()
+        self.transaction_depth = 1
 
     def get(self, name):
-        return self.namespace.get(name, "nil")
+        cell = self.namespace.get(name, [DELETED])
+        return cell[-1]
+
+    def _set_var(self, name, value):
+        """
+        additional record keeping because
+        cells have history
+        """
+        if name not in self.namespace:
+            self.namespace[name] = []
+        cell = self.namespace.get(name)
+        if len(cell) < self.transaction_depth:
+            cell.append(value)
+        elif len(cell) == self.transaction_depth:
+            cell[-1] = value
+
+    def _is_set(self, name):
+        """
+        transaction-aware namespaces get tricky
+        """
+        return self.get(name) != DELETED
+
+    def _get_val(self, val):
+        if val not in self.vals:
+            self.vals[val] = [0]
+        return self.vals[val]
+
+    def _increment_val(self, val):
+        cell = self._get_val(val)
+        if len(cell) == 0:
+            cell.append(1)
+            return
+        elif len(cell) < self.transaction_depth:
+            current = cell[-1]
+            cell.append(current + 1)
+        elif len(cell) == self.transaction_depth:
+            current = cell[-1]
+            cell[-1] = current + 1
+
+    def _decrement_val(self, val):
+        cell = self._get_val(val)
+        if len(cell) < self.transaction_depth:
+            current = cell[-1]
+            cell.append(current + 1)
+        elif len(cell) == self.transaction_depth:
+            current = cell[-1]
+            cell[-1] = current - 1
 
     def set(self, name, value):
-        if name in self.namespace:
-            old_value = self.namespace[name]
-            self.vals[old_value] -= 1
-        self.namespace[name] = value
-        old_count = self.vals.get(value, 0)
-        self.vals[value] = old_count + 1
+        if self._is_set(name):
+            old_value = self.get(name)
+            self._decrement_val(old_value)
+        self._set_var(name, value)
+        self._increment_val(value)
+
+    def _unset(self, name):
+        cell = self.namespace.get(name, [])
+        if len(cell) == 0:
+            return
+        if len(cell) < self.transaction_depth:
+            cell.append(DELETED)
+        elif len(cell) == self.transaction_depth:
+            cell[-1] = DELETED
 
     def unset(self, name):
-        if name in self.namespace:
-            old_value = self.namespace[name]
-            self.vals[old_value] -= 1
-        del self.namespace[name]
+        if self._is_set(name):
+            old_value = self.get(name)
+            self._decrement_val(old_value)
+
+        self._unset(name)
 
     def num_equal_to(self, value):
-        return self.vals.get(value, 0)
+        return self._get_val(value)[-1]
 
     def begin_transaction(self):
         pass

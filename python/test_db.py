@@ -52,3 +52,14 @@ def test_numvals():
     rettuce._main(i, s)
 
     assert expected == s.getvalue()
+
+
+def test_empty_get():
+    db = rettuce.DBState()
+    assert db.get("a") is rettuce.DELETED
+
+
+def test_set():
+    db = rettuce.DBState()
+    db.set("a", 1)
+    assert db.get("a") == 1
