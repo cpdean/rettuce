@@ -8,14 +8,14 @@ def next_line():
         yield input()
 
 
-class ItemDeleted(object):
+class Nil(object):
     def __str__(self):
-        return "nil"
+        return "NULL"
 
 
 # constant whose id in memory will be unique
 # placeholder for anything that's been deleted during a transaction
-DELETED = ItemDeleted()
+NIL = Nil()
 
 
 class DBState(object):
@@ -34,7 +34,7 @@ class DBState(object):
         self.transaction_depth = 1
 
     def get(self, name):
-        cell = self.namespace.get(name, [DELETED])
+        cell = self.namespace.get(name, [NIL])
         return cell[-1]
 
     def _set_var(self, name, value):
@@ -43,7 +43,7 @@ class DBState(object):
         cells have history
         """
         if name not in self.namespace:
-            self.namespace[name] = []
+            self.namespace[name] = [NIL]
         cell = self.namespace.get(name)
         if len(cell) < self.transaction_depth:
             cell.append(value)
@@ -54,7 +54,7 @@ class DBState(object):
         """
         transaction-aware namespaces get tricky
         """
-        return self.get(name) != DELETED
+        return self.get(name) != NIL
 
     def _get_val(self, val):
         if val not in self.vals:
@@ -90,13 +90,13 @@ class DBState(object):
         self._increment_val(value)
 
     def _unset(self, name):
-        cell = self.namespace.get(name, [])
+        cell = self.namespace.get(name, [NIL])
         if len(cell) == 0:
             return
         if len(cell) < self.transaction_depth:
-            cell.append(DELETED)
+            cell.append(NIL)
         elif len(cell) == self.transaction_depth:
-            cell[-1] = DELETED
+            cell[-1] = NIL
 
     def unset(self, name):
         if self._is_set(name):
@@ -109,13 +109,24 @@ class DBState(object):
         return self._get_val(value)[-1]
 
     def begin_transaction(self):
-        pass
+        self.transaction_depth += 1
 
     def commit_transaction(self):
-        pass
+        self.transaction_depth -= 1
+        for var in self.namespace:
+            # rollback to transaction depth
+            values = self.namespace[var]
+            if len(values) > self.transaction_depth:
+                committed_value = values.pop()
+                values[-1] = committed_value
 
     def rollback_transaction(self):
-        pass
+        self.transaction_depth -= 1
+        for var in self.namespace:
+            # rollback to transaction depth
+            values = self.namespace[var]
+            if len(values) > self.transaction_depth:
+                values.pop()
 
 
 def _main(inputs, outputs):
@@ -145,6 +156,18 @@ def _main(inputs, outputs):
                 cmd, value = line.split()
                 o = the_db.num_equal_to(value)
                 write(o)
+
+            elif line.strip() == "begin":
+                the_db.begin_transaction()
+                write("")
+
+            elif line.strip() == "rollback":
+                the_db.rollback_transaction()
+                write("")
+
+            elif line.strip() == "commit":
+                the_db.commit_transaction()
+                write("")
 
             else:
                 write("WHAT? " + line)

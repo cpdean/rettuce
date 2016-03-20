@@ -20,7 +20,7 @@ def test_d():
     expected = """
 10
 
-nil
+NULL
 """
     s = io.StringIO()
     rettuce._main(i, s)
@@ -73,7 +73,6 @@ def test_transaction1():
 
     expected = """
 
-
 10
 
 
@@ -91,10 +90,86 @@ NULL
 
 def test_empty_get():
     db = rettuce.DBState()
-    assert db.get("a") is rettuce.DELETED
+    assert db.get("a") is rettuce.NIL
 
 
 def test_set():
     db = rettuce.DBState()
     db.set("a", 1)
     assert db.get("a") == 1
+
+
+def test_in_transaction():
+    db = rettuce.DBState()
+    db.begin_transaction()
+    db.set("a", 1)
+    a = db.get("a")
+    assert a == 1
+
+
+def test_rollback():
+    db = rettuce.DBState()
+    db.set("a", 1)
+    db.begin_transaction()
+    db.set("a", 2)
+    during = db.get("a")
+    db.rollback_transaction()
+    after = db.get("a")
+    assert during == 2
+    assert after == 1
+
+
+def test_rollback2():
+    db = rettuce.DBState()
+    # |
+    db.set("a", 1)
+    first = db.get("a")
+
+    db.begin_transaction()
+    # | |
+    db.set("a", 2)
+    second = db.get("a")
+
+    db.begin_transaction()
+    # | | |
+    db.set("a", 3)
+    third = db.get("a")
+
+    db.rollback_transaction()
+    # | |
+    rolled_second = db.get("a")
+
+    db.rollback_transaction()
+    # |
+    rolled_first = db.get("a")
+
+    assert first == 1
+    assert second == 2
+    assert third == 3
+    assert rolled_second == 2
+    assert rolled_first == 1
+
+
+def test_commit():
+    db = rettuce.DBState()
+    db.set("a", 1)
+    db.begin_transaction()
+    db.set("a", 2)
+    during = db.get("a")
+    db.commit_transaction()
+    after = db.get("a")
+    assert during == 2
+    assert after == 2
+
+
+def test_rolled_not_set():
+    db = rettuce.DBState()
+    first = db.get("a")
+    db.begin_transaction()
+    db.set("a", 1)
+    second = db.get("a")
+    db.rollback_transaction()
+    after = db.get("a")
+    assert first is rettuce.NIL
+    assert second == 1
+    assert after is rettuce.NIL
