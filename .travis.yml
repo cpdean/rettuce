@@ -1,5 +1,14 @@
+sudo: required
+
 language: python
 python: 3.4
+
+services:
+    - docker
+
+before_install:
+    - docker pull redis
+
 env:
   - TOX_ENV=py34
 install:

@@ -4,3 +4,6 @@
 
 pushd python
 tox
+popd
+pushd systems
+tox
