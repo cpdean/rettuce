@@ -10,6 +10,11 @@ import time
 
 @pytest.fixture(scope="session")
 def docker_client():
+    if "DOCKER_HOST" not in os.environ:
+        client = docker.Client(
+            base_url='unix://var/run/docker.sock'
+        )
+        return client
     DOCKER_CERTS = os.environ.get("DOCKER_CERT_PATH")
     DOCKER_HOST = "https://" + os.environ.get("DOCKER_HOST").split("//")[-1]
 
@@ -37,11 +42,14 @@ def native_redis(docker_client):
         detach=True
     )
     docker_client.start(redis_container.get("Id"))
-    hostname = docker_client.base_url.split("//")[-1].split(":")[0]
     port = docker_client.port(
         redis_container.get("Id"),
         6379
     )[0]["HostPort"]
+    if "https" not in docker_client.base_url:
+        hostname = "localhost"
+    else:
+        hostname = docker_client.base_url.split("//")[-1].split(":")[0]
     # wait until redis is ready
     attempt = 0
     while True:
