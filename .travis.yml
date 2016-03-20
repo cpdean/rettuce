@@ -13,11 +13,11 @@ before_install:
     - sudo apt-get install docker-engine=1.9.1-0~precise -y
     - sudo gpasswd -a ${USER} docker
     - sudo service docker restart
-    - sudo sudo -u travis -g docker -i "docker pull redis"
+    - sudo -E docker pull redis
 
 env:
   - TOX_ENV=py34
 install:
   - pip install tox
 script:
-  - ./the_build.sh
+  - sudo -E ./the_build.sh
