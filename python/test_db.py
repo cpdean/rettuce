@@ -54,6 +54,41 @@ def test_numvals():
     assert expected == s.getvalue()
 
 
+def test_transaction1():
+    i = _incoming(
+        [
+            "BEGIN",
+            "SET a 10",
+            "GET a",
+            "BEGIN",
+            "SET a 20",
+            "GET a",
+            "ROLLBACK",
+            "GET a",
+            "ROLLBACK",
+            "GET a",
+            "END",
+        ]
+    )
+
+    expected = """
+
+
+10
+
+
+20
+
+10
+
+NULL
+"""
+    s = io.StringIO()
+    rettuce._main(i, s)
+
+    assert expected == s.getvalue()
+
+
 def test_empty_get():
     db = rettuce.DBState()
     assert db.get("a") is rettuce.DELETED
