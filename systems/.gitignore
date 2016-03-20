@@ -1,3 +1,4 @@
 .tox/
 .cache/
 rettucetests.egg-info/
+*.pyc

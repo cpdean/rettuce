@@ -7,6 +7,9 @@ services:
     - docker
 
 before_install:
+    - sudo apt-get -qq update
+    - sudo apt-get install -y libxml2-dev
+    - sudo apt-get install docker=1.8.3~ds1-2
     - docker pull redis
 
 env:
