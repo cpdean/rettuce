@@ -20,4 +20,6 @@ env:
 install:
   - pip install tox
 script:
-  - sudo -E ./the_build.sh
+    - env
+    - sudo -E env
+    #- sudo -E ./the_build.sh
