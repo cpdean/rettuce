@@ -4,6 +4,9 @@ language: python
 python: 3.4
 
 before_install:
+    # all these shenanigans are because docker-py wants docker remote api 1.21
+    # but travis has 1.20
+    # and downgrading causes some SSL issue locally on OSX
     - sudo apt-get -qq update -y
     - sudo apt-get install apt-transport-https ca-certificates -y
     - sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
@@ -20,4 +23,5 @@ env:
 install:
   - pip install tox
 script:
+    # weird sudo thing so that the travis user can use docker installed by apt
     - sudo -E "PATH=$PATH" ./the_build.sh
