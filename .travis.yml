@@ -12,9 +12,8 @@ before_install:
     - sudo apt-get -qq update -y
     - sudo apt-get install docker-engine=1.9.1-0~precise -y
     - sudo gpasswd -a ${USER} docker
-    - newgrp docker
     - sudo service docker restart
-    - docker pull redis
+    - sudo sudo -u travis -g docker -i "docker pull redis"
 
 env:
   - TOX_ENV=py34
