@@ -1,7 +1,9 @@
 sudo: required
 
 language: python
-python: 3.4
+python:
+    - "3.4"
+    - "3.5"
 
 before_install:
     # all these shenanigans are because docker-py wants docker remote api 1.21
