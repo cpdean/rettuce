@@ -130,7 +130,6 @@ class DBState(object):
 
 
 def _main(inputs, outputs):
-    write = lambda s: outputs.write(str(s) + "\n")
     the_db = DBState()
     for line in (i.lower() for i in inputs):
         try:
@@ -140,45 +139,77 @@ def _main(inputs, outputs):
             elif line.startswith("set "):
                 cmd, varname, value = line.split()
                 the_db.set(varname, value)
-                write("")
+                outputs.write("")
 
             elif line.startswith("unset "):
                 cmd, varname = line.split()
                 the_db.unset(varname)
-                write("")
+                outputs.write("")
 
             elif line.startswith("get "):
                 cmd, varname = line.split()
                 o = the_db.get(varname)
-                write(o)
+                outputs.write(o)
 
             elif line.startswith("numequalto "):
                 cmd, value = line.split()
                 o = the_db.num_equal_to(value)
-                write(o)
+                outputs.write(o)
 
             elif line.strip() == "begin":
                 the_db.begin_transaction()
-                write("")
+                outputs.write("")
 
             elif line.strip() == "rollback":
                 the_db.rollback_transaction()
-                write("")
+                outputs.write("")
 
             elif line.strip() == "commit":
                 the_db.commit_transaction()
-                write("")
+                outputs.write("")
 
             else:
-                write("WHAT? " + line)
+                outputs.write("WHAT? " + line)
         except:
-            write("failed on: " + line)
-            write(line.split())
+            outputs.write("failed on: " + line)
+            outputs.write(line.split())
             raise
 
 
+class STDOUT(object):
+    def write(self, s):
+        return sys.stdout.write(str(s) + "\n")
+
+
+def tcp_requests(host, port):
+    import socket
+    p, port = sys.argv
+    host = ''
+    backlog = 5
+    size = 1024
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind((host, port))
+    try:
+        s.listen(backlog)
+        while 1:
+            client, address = s.accept()
+            data = client.recv(size)
+            if data:
+                client.send(data + b":" + data)
+                client.send(b"\n")
+
+            client.close()
+    finally:
+        s.close()
+
+
+def runserver():
+    import sys
+
+
 def main():
-    return _main(next_line(), sys.stdout)
+    return _main(next_line(), STDOUT())
 
 if __name__ == '__main__':
     main()

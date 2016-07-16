@@ -1,12 +1,29 @@
 import rettuce
 import io
+import pytest
 
 
 def _incoming(lines):
     return (i for i in lines)
 
 
-def test_d():
+class STDOUT(object):
+    def __init__(self):
+        self.v = io.StringIO()
+
+    def write(self, s):
+        return self.v.write(str(s) + "\n")
+
+    def getvalue(self):
+        return self.v.getvalue()
+
+
+@pytest.fixture
+def stdout():
+    return STDOUT()
+
+
+def test_d(stdout):
     i = _incoming(
         [
             "SET ex 10",
@@ -22,13 +39,12 @@ def test_d():
 
 NULL
 """
-    s = io.StringIO()
-    rettuce._main(i, s)
+    rettuce._main(i, stdout)
 
-    assert expected == s.getvalue()
+    assert expected == stdout.getvalue()
 
 
-def test_numvals():
+def test_numvals(stdout):
     i = _incoming(
         [
             "SET a 10",
@@ -48,13 +64,12 @@ def test_numvals():
 
 1
 """
-    s = io.StringIO()
-    rettuce._main(i, s)
+    rettuce._main(i, stdout)
 
-    assert expected == s.getvalue()
+    assert expected == stdout.getvalue()
 
 
-def test_transaction1():
+def test_transaction1(stdout):
     i = _incoming(
         [
             "BEGIN",
@@ -82,10 +97,9 @@ def test_transaction1():
 
 NULL
 """
-    s = io.StringIO()
-    rettuce._main(i, s)
+    rettuce._main(i, stdout)
 
-    assert expected == s.getvalue()
+    assert expected == stdout.getvalue()
 
 
 def test_empty_get():

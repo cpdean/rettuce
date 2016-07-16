@@ -23,7 +23,8 @@ setup(
     tests_require=['py.test'],
     entry_points={
         "console_scripts": [
-            'rettuce-py = rettuce:main'
+            'rettuce-py = rettuce:main',
+            'rettuce-server = rettuce:runserver',
         ]
     },
     zip_safe=False,
